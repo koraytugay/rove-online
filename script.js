@@ -163,6 +163,16 @@ function recalculateGridOrigin() {
     });
 }
 
+// Preload all back images
+function preloadBackImages() {
+    const imageNames = ['brain', 'coil', 'gripper', 'laser', 'motor', 'sensor'];
+    imageNames.forEach(name => {
+        const img = new Image();
+        img.src = `resources/${name}-back.png`;
+    });
+}
+
+preloadBackImages();
 initializeGrid();
 centerImages();
 // Recalculate grid origin after centering
