@@ -116,9 +116,9 @@ body {
     height: 35px;
     border-radius: 50%;
     background: white;
-    border: 2px solid #667eea;
+    border: 2px solid #4a4a4a;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 22px;
     display: flex;
     align-items: center;
     justify-content: center;

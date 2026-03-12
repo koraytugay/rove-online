@@ -86,7 +86,6 @@ function saveState() {
         left: wrapper.style.left,
         top: wrapper.style.top
     }));
-    console.log('State saved!');
 }
 
 function restoreState() {
@@ -98,9 +97,7 @@ function restoreState() {
                 wrapper.style.top = state.top;
             }
         });
-        console.log('State restored!');
     } else {
-        console.log('No saved state found!');
     }
 }
 
@@ -130,57 +127,46 @@ function shuffleImagePositions() {
 
 // Initialize grid and positions
 function initializeGrid() {
-    console.log('=== INITIALIZE GRID START ===');
 
     // Shuffle positions first
     shuffleImagePositions();
-    console.log('Positions shuffled');
 
     // Store image dimensions from the first wrapper
     const firstWrapper = imageWrappers[0];
     const rect = firstWrapper.getBoundingClientRect();
     IMAGE_WIDTH = rect.width;
     IMAGE_HEIGHT = rect.height;
-    console.log('Wrapper dimensions stored (width, height):', IMAGE_WIDTH, IMAGE_HEIGHT);
 
     // Calculate initial grid origin
     recalculateGridOrigin();
-    console.log('=== INITIALIZE GRID END ===\n');
 }
 
 // Recalculate grid origin based on current image positions
 function recalculateGridOrigin() {
-    console.log('=== RECALCULATE GRID ORIGIN ===');
 
     // Use the first wrapper's center as grid origin
     const firstWrapper = imageWrappers[0];
     const firstLeft = parseFloat(firstWrapper.style.left);
     const firstTop = parseFloat(firstWrapper.style.top);
-    console.log('First wrapper position (left, top):', firstLeft, firstTop);
 
     // Set grid origin to the center of the first wrapper
     GRID_ORIGIN_X = firstLeft + IMAGE_WIDTH / 2;
     GRID_ORIGIN_Y = firstTop + IMAGE_HEIGHT / 2;
 
-    console.log(`Grid origin updated: (${GRID_ORIGIN_X}, ${GRID_ORIGIN_Y}), spacing (${GRID_SPACING_X}, ${GRID_SPACING_Y})`);
 
     // Log all wrapper centers to verify grid alignment
-    console.log('--- All wrapper centers ---');
     imageWrappers.forEach((wrapper, idx) => {
         const wrapperLeft = parseFloat(wrapper.style.left);
         const wrapperTop = parseFloat(wrapper.style.top);
         const wrapperCenterX = wrapperLeft + IMAGE_WIDTH / 2;
         const wrapperCenterY = wrapperTop + IMAGE_HEIGHT / 2;
-        console.log(`Wrapper ${idx} (${wrapper.id}): center (${wrapperCenterX}, ${wrapperCenterY})`);
     });
-    console.log('=== RECALCULATE GRID ORIGIN END ===\n');
 }
 
 initializeGrid();
 centerImages();
 // Recalculate grid origin after centering
 recalculateGridOrigin();
-console.log('Grid recalculated after centering');
 
 // Show images after positioning is complete
 imageWrappers.forEach(wrapper => {
@@ -223,14 +209,10 @@ function handleImageClick(e, wrapper) {
 }
 
 function flipImage(img) {
-    console.log('=== FLIP IMAGE ===');
-    console.log('Flipping image:', img.id);
 
     const imageName = img.dataset.name;
     const currentSrc = img.src;
 
-    console.log('Current src:', currentSrc);
-    console.log('Image name:', imageName);
 
     // Add flip animation
     img.classList.add('flipping');
@@ -239,10 +221,8 @@ function flipImage(img) {
     setTimeout(() => {
         if (currentSrc.includes('-front.png')) {
             img.src = `resources/${imageName}-back.png`;
-            console.log('Switched to back');
         } else {
             img.src = `resources/${imageName}-front.png`;
-            console.log('Switched to front');
         }
     }, 300);
 
@@ -251,7 +231,6 @@ function flipImage(img) {
         img.classList.remove('flipping');
     }, 600);
 
-    console.log('=== FLIP IMAGE END ===\n');
 }
 
 function startDrag(e, wrapper) {
@@ -264,7 +243,6 @@ function startDrag(e, wrapper) {
     // Store original position before dragging
     originalDragPosition.left = parseFloat(activeElement.style.left) || 0;
     originalDragPosition.top = parseFloat(activeElement.style.top) || 0;
-    console.log('Original drag position stored:', originalDragPosition);
 
     const rect = activeElement.getBoundingClientRect();
     offsetX = e.clientX - rect.left;
@@ -318,35 +296,27 @@ function drag(e) {
 }
 
 function stopDrag(e) {
-    console.log('=== STOP DRAG ===');
-    console.log('Active element:', activeElement ? activeElement.id : 'none');
-    console.log('Is dragging:', isDragging);
-    console.log('Number of selected wrappers:', relativePositions.length);
 
     if (activeElement && isDragging) {
         // Check if dropped on another wrapper (only for single wrapper drag, not multiple selection)
         if (relativePositions.length === 0) {
             const dropTarget = getImageUnderMouse(e.clientX, e.clientY, activeElement);
             if (dropTarget && dropTarget !== activeElement) {
-                console.log('Dropped on wrapper:', dropTarget.id);
                 swapImagePositions(activeElement, dropTarget);
                 activeElement.style.zIndex = 1;
                 activeElement = null;
                 relativePositions = [];
-                console.log('=== STOP DRAG END (SWAPPED) ===\n');
                 return;
             }
         }
 
         // Snap to grid
         if (relativePositions.length > 0) {
-            console.log('Snapping multiple selected wrappers to grid');
             // Snap all selected wrappers to grid
             relativePositions.forEach(rel => {
                 snapToGrid(rel.element);
             });
         } else {
-            console.log('Snapping single wrapper to grid');
             // Snap single wrapper to grid
             snapToGrid(activeElement);
         }
@@ -355,23 +325,19 @@ function stopDrag(e) {
         activeElement = null;
         relativePositions = [];
     } else if (activeElement) {
-        console.log('No drag occurred (just a click)');
         activeElement.style.zIndex = 1;
         activeElement = null;
         relativePositions = [];
     }
-    console.log('=== STOP DRAG END ===\n');
 }
 
 function getImageUnderMouse(x, y, excludeElement) {
-    console.log('Checking for image under mouse at:', x, y);
 
     // Temporarily hide the dragged element to check what's underneath
     const originalPointerEvents = excludeElement.style.pointerEvents;
     excludeElement.style.pointerEvents = 'none';
 
     const elementUnderMouse = document.elementFromPoint(x, y);
-    console.log('Element under mouse:', elementUnderMouse);
 
     excludeElement.style.pointerEvents = originalPointerEvents;
 
@@ -386,16 +352,12 @@ function getImageUnderMouse(x, y, excludeElement) {
     }
 
     if (targetWrapper) {
-        console.log('Found wrapper:', targetWrapper.id);
         return targetWrapper;
     }
-    console.log('No wrapper found under mouse');
     return null;
 }
 
 function swapImagePositions(wrapper1, wrapper2) {
-    console.log('=== SWAP POSITIONS ===');
-    console.log('Swapping', wrapper1.id, 'with', wrapper2.id);
 
     // Use wrapper1's ORIGINAL position (before drag) and wrapper2's current position
     const wrapper1OriginalLeft = originalDragPosition.left + 'px';
@@ -403,8 +365,6 @@ function swapImagePositions(wrapper1, wrapper2) {
     const wrapper2Left = wrapper2.style.left;
     const wrapper2Top = wrapper2.style.top;
 
-    console.log('wrapper1 original position:', wrapper1OriginalLeft, wrapper1OriginalTop);
-    console.log('wrapper2 position:', wrapper2Left, wrapper2Top);
 
     // Move wrapper1 to where wrapper2 was
     wrapper1.style.left = wrapper2Left;
@@ -414,57 +374,43 @@ function swapImagePositions(wrapper1, wrapper2) {
     wrapper2.style.left = wrapper1OriginalLeft;
     wrapper2.style.top = wrapper1OriginalTop;
 
-    console.log('=== SWAP COMPLETE ===\n');
 }
 
 function snapToGrid(element) {
-    console.log('=== SNAP TO GRID START ===');
-    console.log('Element ID:', element.id);
 
     // Get current position from inline styles
     const currentLeft = parseFloat(element.style.left) || 0;
     const currentTop = parseFloat(element.style.top) || 0;
-    console.log('Current position (left, top):', currentLeft, currentTop);
 
     // Use stored unscaled dimensions instead of getBoundingClientRect
-    console.log('Using stored dimensions (width, height):', IMAGE_WIDTH, IMAGE_HEIGHT);
 
     // Calculate center of the image using unscaled dimensions
     const centerX = currentLeft + IMAGE_WIDTH / 2;
     const centerY = currentTop + IMAGE_HEIGHT / 2;
-    console.log('Image center (x, y):', centerX, centerY);
 
-    console.log('Grid origin (x, y):', GRID_ORIGIN_X, GRID_ORIGIN_Y);
-    console.log('Grid spacing (x, y):', GRID_SPACING_X, GRID_SPACING_Y);
 
     // Calculate offset from grid origin
     const offsetFromOriginX = centerX - GRID_ORIGIN_X;
     const offsetFromOriginY = centerY - GRID_ORIGIN_Y;
-    console.log('Offset from origin (x, y):', offsetFromOriginX, offsetFromOriginY);
 
     // Calculate grid indices
     const gridIndexX = Math.round(offsetFromOriginX / GRID_SPACING_X);
     const gridIndexY = Math.round(offsetFromOriginY / GRID_SPACING_Y);
-    console.log('Grid indices (x, y):', gridIndexX, gridIndexY);
 
     // Find nearest grid node
     const nearestGridX = GRID_ORIGIN_X + gridIndexX * GRID_SPACING_X;
     const nearestGridY = GRID_ORIGIN_Y + gridIndexY * GRID_SPACING_Y;
-    console.log('Nearest grid node (x, y):', nearestGridX, nearestGridY);
 
     // Calculate new position (top-left corner) using unscaled dimensions
     const newLeft = nearestGridX - IMAGE_WIDTH / 2;
     const newTop = nearestGridY - IMAGE_HEIGHT / 2;
-    console.log('New position (left, top):', newLeft, newTop);
 
     // Set position so center aligns with grid node
     element.style.left = newLeft + 'px';
     element.style.top = newTop + 'px';
-    console.log('=== SNAP TO GRID END ===\n');
 }
 
 function centerImages() {
-    console.log('=== CENTER IMAGES START ===');
     const wrappers = Array.from(imageWrappers);
 
     // Get center positions of all wrappers using inline styles and stored dimensions
@@ -480,17 +426,14 @@ function centerImages() {
     // Calculate center of mass
     const centerOfMassX = centers.reduce((sum, c) => sum + c.x, 0) / centers.length;
     const centerOfMassY = centers.reduce((sum, c) => sum + c.y, 0) / centers.length;
-    console.log('Current center of mass:', centerOfMassX, centerOfMassY);
 
     // Calculate page center
     const pageCenterX = window.innerWidth / 2;
     const pageCenterY = window.innerHeight / 2;
-    console.log('Page center:', pageCenterX, pageCenterY);
 
     // Calculate offset needed
     const offsetXNeeded = pageCenterX - centerOfMassX;
     const offsetYNeeded = pageCenterY - centerOfMassY;
-    console.log('Offset needed:', offsetXNeeded, offsetYNeeded);
 
     // Apply offset to all wrappers using their inline style positions
     wrappers.forEach(wrapper => {
@@ -500,7 +443,6 @@ function centerImages() {
         wrapper.style.top = (currentTop + offsetYNeeded) + 'px';
     });
 
-    console.log('=== CENTER IMAGES END ===\n');
 
     // Recalculate grid origin after centering
     recalculateGridOrigin();
