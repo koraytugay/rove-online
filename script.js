@@ -182,6 +182,11 @@ centerImages();
 recalculateGridOrigin();
 console.log('Grid recalculated after centering');
 
+// Show images after positioning is complete
+imageWrappers.forEach(wrapper => {
+    wrapper.classList.add('loaded');
+});
+
 function toggleSelectAll() {
     if (selectedImages.size === imageWrappers.length) {
         // Deselect all

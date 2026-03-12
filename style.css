@@ -57,6 +57,12 @@ body {
 .image-wrapper {
     position: absolute;
     width: 240px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-wrapper.loaded {
+    opacity: 1;
 }
 
 .draggable {
