@@ -58,7 +58,7 @@ body {
     position: absolute;
     width: 240px;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, left 0.3s ease-out, top 0.3s ease-out;
 }
 
 .image-wrapper.loaded {

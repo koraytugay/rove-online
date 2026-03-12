@@ -327,15 +327,23 @@ function stopDrag(e) {
             }
         }
 
-        // Snap to grid
-        if (relativePositions.length > 0) {
-            // Snap all selected wrappers to grid
-            relativePositions.forEach(rel => {
-                snapToGrid(rel.element);
-            });
+        // Check if all images are selected
+        const allImagesSelected = relativePositions.length === imageWrappers.length;
+
+        if (allImagesSelected) {
+            // If all images were moved together, don't snap - just recalculate grid origin
+            recalculateGridOrigin();
         } else {
-            // Snap single wrapper to grid
-            snapToGrid(activeElement);
+            // Snap to grid for partial selections
+            if (relativePositions.length > 0) {
+                // Snap all selected wrappers to grid
+                relativePositions.forEach(rel => {
+                    snapToGrid(rel.element);
+                });
+            } else {
+                // Snap single wrapper to grid
+                snapToGrid(activeElement);
+            }
         }
 
         activeElement.style.zIndex = 1;
