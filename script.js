@@ -81,11 +81,15 @@ function handleKeyPress(e) {
 }
 
 function saveState() {
-    savedState = Array.from(imageWrappers).map(wrapper => ({
-        id: wrapper.id,
-        left: wrapper.style.left,
-        top: wrapper.style.top
-    }));
+    savedState = Array.from(imageWrappers).map(wrapper => {
+        const img = wrapper.querySelector('.draggable');
+        return {
+            id: wrapper.id,
+            left: wrapper.style.left,
+            top: wrapper.style.top,
+            src: img.src
+        };
+    });
 }
 
 function restoreState() {
@@ -95,9 +99,12 @@ function restoreState() {
             if (wrapper) {
                 wrapper.style.left = state.left;
                 wrapper.style.top = state.top;
+                const img = wrapper.querySelector('.draggable');
+                if (img) {
+                    img.src = state.src;
+                }
             }
         });
-    } else {
     }
 }
 
