@@ -77,6 +77,8 @@ function handleKeyPress(e) {
         saveState();
     } else if (e.key === 'r' || e.key === 'R') {
         restoreState();
+    } else if (e.key === 'g' || e.key === 'G') {
+        toggleGridOverlay();
     }
 }
 
@@ -168,6 +170,12 @@ function recalculateGridOrigin() {
         const wrapperCenterX = wrapperLeft + IMAGE_WIDTH / 2;
         const wrapperCenterY = wrapperTop + IMAGE_HEIGHT / 2;
     });
+
+    // Update grid overlay if visible
+    const gridOverlay = document.getElementById('gridOverlay');
+    if (gridOverlay && gridOverlay.classList.contains('visible')) {
+        createGridOverlay();
+    }
 }
 
 // Preload all back images
@@ -189,6 +197,57 @@ recalculateGridOrigin();
 imageWrappers.forEach(wrapper => {
     wrapper.classList.add('loaded');
 });
+
+// Grid overlay functionality
+function createGridOverlay() {
+    const gridOverlay = document.getElementById('gridOverlay');
+    if (!gridOverlay) return;
+
+    // Clear existing dots
+    gridOverlay.innerHTML = '';
+
+    // Calculate how many grid points we need to cover the viewport
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Calculate grid starting positions
+    const startX = GRID_ORIGIN_X % GRID_SPACING_X;
+    const startY = GRID_ORIGIN_Y % GRID_SPACING_Y;
+
+    // Create grid dots
+    for (let x = startX; x < viewportWidth; x += GRID_SPACING_X) {
+        for (let y = startY; y < viewportHeight; y += GRID_SPACING_Y) {
+            const dot = document.createElement('div');
+            dot.className = 'grid-dot';
+            dot.style.left = x + 'px';
+            dot.style.top = y + 'px';
+            gridOverlay.appendChild(dot);
+        }
+    }
+}
+
+function toggleGridOverlay() {
+    const gridOverlay = document.getElementById('gridOverlay');
+    if (!gridOverlay) return;
+
+    if (gridOverlay.classList.contains('visible')) {
+        // Hide grid
+        gridOverlay.classList.remove('visible');
+    } else {
+        // Show grid
+        createGridOverlay();
+        gridOverlay.classList.add('visible');
+    }
+}
+
+// Initialize grid overlay on page load
+setTimeout(() => {
+    createGridOverlay();
+    const gridOverlay = document.getElementById('gridOverlay');
+    if (gridOverlay) {
+        gridOverlay.classList.add('visible');
+    }
+}, 100);
 
 function toggleSelectAll() {
     if (selectedImages.size === imageWrappers.length) {
