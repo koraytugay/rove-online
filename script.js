@@ -4,16 +4,21 @@ let offsetY = 0;
 let selectedImages = new Set();
 let relativePositions = [];
 let savedState = null;
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
 
 const draggables = document.querySelectorAll('.draggable');
 
 draggables.forEach(draggable => {
     draggable.addEventListener('mousedown', startDrag);
+    draggable.addEventListener('click', handleImageClick);
 });
 
 document.addEventListener('mousemove', drag);
 document.addEventListener('mouseup', stopDrag);
 document.addEventListener('click', handleBackgroundClick);
+document.addEventListener('keydown', handleKeyPress);
 
 // Add button event listeners
 document.getElementById('centerBtn').addEventListener('click', centerImages);
@@ -30,6 +35,18 @@ function handleBackgroundClick(e) {
         // Deselect all
         selectedImages.clear();
         draggables.forEach(img => img.classList.remove('selected'));
+    }
+}
+
+function handleKeyPress(e) {
+    if (e.key === 'a' || e.key === 'A') {
+        toggleSelectAll();
+    } else if (e.key === 'c' || e.key === 'C') {
+        centerImages();
+    } else if (e.key === 's' || e.key === 'S') {
+        saveState();
+    } else if (e.key === 'r' || e.key === 'R') {
+        restoreState();
     }
 }
 
@@ -57,7 +74,32 @@ function restoreState() {
     }
 }
 
-// Center images on page load
+// Randomize which image goes in which position
+function shuffleImagePositions() {
+    const positions = [
+        { top: '150px', left: '200px' },
+        { top: '150px', left: '450px' },
+        { top: '150px', left: '700px' },
+        { top: '325px', left: '200px' },
+        { top: '325px', left: '450px' },
+        { top: '325px', left: '700px' }
+    ];
+
+    // Shuffle positions array
+    for (let i = positions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [positions[i], positions[j]] = [positions[j], positions[i]];
+    }
+
+    // Assign shuffled positions to images
+    draggables.forEach((img, index) => {
+        img.style.top = positions[index].top;
+        img.style.left = positions[index].left;
+    });
+}
+
+// Shuffle image positions on page load then center
+shuffleImagePositions();
 centerImages();
 
 function toggleSelectAll() {
@@ -75,9 +117,28 @@ function toggleSelectAll() {
     }
 }
 
+function handleImageClick(e) {
+    // Only toggle selection if we didn't drag
+    if (!isDragging) {
+        e.stopPropagation();
+        const img = e.target;
+
+        if (selectedImages.has(img)) {
+            selectedImages.delete(img);
+            img.classList.remove('selected');
+        } else {
+            selectedImages.add(img);
+            img.classList.add('selected');
+        }
+    }
+}
+
 function startDrag(e) {
     activeElement = e.target;
     activeElement.style.zIndex = 1000;
+    isDragging = false;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
 
     const rect = activeElement.getBoundingClientRect();
     offsetX = e.clientX - rect.left;
@@ -103,21 +164,29 @@ function startDrag(e) {
 
 function drag(e) {
     if (activeElement) {
-        e.preventDefault();
+        // Check if mouse has moved enough to be considered a drag
+        const distanceMoved = Math.abs(e.clientX - dragStartX) + Math.abs(e.clientY - dragStartY);
+        if (distanceMoved > 5) {
+            isDragging = true;
+        }
 
-        if (relativePositions.length > 0) {
-            // Move all selected images together
-            const newLeft = e.clientX - offsetX;
-            const newTop = e.clientY - offsetY;
+        if (isDragging) {
+            e.preventDefault();
 
-            relativePositions.forEach(rel => {
-                rel.element.style.left = (newLeft + rel.dx) + 'px';
-                rel.element.style.top = (newTop + rel.dy) + 'px';
-            });
-        } else {
-            // Move single image
-            activeElement.style.left = (e.clientX - offsetX) + 'px';
-            activeElement.style.top = (e.clientY - offsetY) + 'px';
+            if (relativePositions.length > 0) {
+                // Move all selected images together
+                const newLeft = e.clientX - offsetX;
+                const newTop = e.clientY - offsetY;
+
+                relativePositions.forEach(rel => {
+                    rel.element.style.left = (newLeft + rel.dx) + 'px';
+                    rel.element.style.top = (newTop + rel.dy) + 'px';
+                });
+            } else {
+                // Move single image
+                activeElement.style.left = (e.clientX - offsetX) + 'px';
+                activeElement.style.top = (e.clientY - offsetY) + 'px';
+            }
         }
     }
 }
