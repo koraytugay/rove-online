@@ -52,6 +52,7 @@ document.getElementById('centerBtn').addEventListener('click', centerImages);
 document.getElementById('selectAllBtn').addEventListener('click', toggleSelectAll);
 document.getElementById('saveBtn').addEventListener('click', saveState);
 document.getElementById('restoreBtn').addEventListener('click', restoreState);
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
 
 function handleBackgroundClick(e) {
     // Check if click is not on an image or button
@@ -79,6 +80,8 @@ function handleKeyPress(e) {
         restoreState();
     } else if (e.key === 'g' || e.key === 'G') {
         toggleGridOverlay();
+    } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
     }
 }
 
@@ -248,6 +251,21 @@ setTimeout(() => {
         gridOverlay.classList.add('visible');
     }
 }, 100);
+
+// Fullscreen functionality
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        // Enter fullscreen
+        document.documentElement.requestFullscreen().catch(err => {
+            console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
 
 function toggleSelectAll() {
     if (selectedImages.size === imageWrappers.length) {
