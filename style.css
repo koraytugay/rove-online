@@ -6,7 +6,8 @@
 
 body {
     font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: url('resources/mars.jpg') no-repeat center center fixed;
+    background-size: cover;
     min-height: 100vh;
     overflow: hidden;
 }
@@ -23,12 +24,12 @@ body {
 
 .button-container button {
     padding: 12px 24px;
-    background-color: white;
-    color: #667eea;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #4a4a4a;
     border: none;
     border-radius: 8px;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: normal;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     transition: all 0.2s ease;
@@ -37,7 +38,7 @@ body {
 }
 
 .button-container button:hover {
-    background-color: #f0f0f0;
+    background-color: rgba(255, 255, 255, 1);
     transform: translateY(-2px);
     box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
 }
