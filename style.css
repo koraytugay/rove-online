@@ -147,12 +147,13 @@ body {
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: rgba(255, 255, 255, 0.95);
-    color: #4a4a4a;
+    backdrop-filter: blur(8px);
+    background: rgba(40, 35, 30, 0.9);
+    color: #f4e4d4;
     padding: 12px 24px;
-    border: 2px solid #000000;
+    border: 2px solid rgba(210, 105, 60, 0.6);
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(255, 140, 60, 0.15);
     font-size: 16px;
     z-index: 3000;
     opacity: 0;
