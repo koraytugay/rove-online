@@ -185,7 +185,10 @@ function loadStateFromHash() {
             const stateJson = atob(hash);
             const state = JSON.parse(stateJson);
             applyState(state);
-            showToast('Loaded State from URL');
+            // Delay toast slightly to ensure page is ready
+            setTimeout(() => {
+                showToast('Loaded State from URL');
+            }, 100);
         } catch (err) {
             console.error('Failed to load state from hash:', err);
         }
