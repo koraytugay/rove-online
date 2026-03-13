@@ -63,6 +63,7 @@ document.getElementById('centerBtn').addEventListener('click', centerImages);
 document.getElementById('selectAllBtn').addEventListener('click', toggleSelectAll);
 document.getElementById('saveBtn').addEventListener('click', saveState);
 document.getElementById('restoreBtn').addEventListener('click', restoreState);
+document.getElementById('copyLinkBtn').addEventListener('click', copyLinkToClipboard);
 document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
 document.getElementById('hideBtn').addEventListener('click', toggleButtons);
 
@@ -90,6 +91,8 @@ function handleKeyPress(e) {
         saveState();
     } else if (e.key === 'r' || e.key === 'R') {
         restoreState();
+    } else if (e.key === 'l' || e.key === 'L') {
+        copyLinkToClipboard();
     } else if (e.key === 'g' || e.key === 'G') {
         toggleGridOverlay();
     } else if (e.key === 'f' || e.key === 'F') {
@@ -152,6 +155,36 @@ function restoreState() {
             if (gridOverlay && gridOverlay.classList.contains('visible')) {
                 createGridOverlay();
             }
+        }
+    }
+}
+
+function copyLinkToClipboard() {
+    const state = captureState();
+    const stateJson = JSON.stringify(state);
+    const stateBase64 = btoa(stateJson);
+
+    const url = window.location.origin + window.location.pathname + '#' + stateBase64;
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(url).then(() => {
+        showToast('Link Copied to Clipboard');
+    }).catch(err => {
+        showToast('Failed to Copy Link');
+    });
+}
+
+function loadStateFromHash() {
+    const hash = window.location.hash.substring(1); // Remove the '#'
+
+    if (hash) {
+        try {
+            const stateJson = atob(hash);
+            const state = JSON.parse(stateJson);
+            applyState(state);
+            showToast('Loaded State from URL');
+        } catch (err) {
+            console.error('Failed to load state from hash:', err);
         }
     }
 }
@@ -238,6 +271,9 @@ initializeGrid();
 centerImages();
 // Recalculate grid origin after centering
 recalculateGridOrigin();
+
+// Load state from URL hash if present
+loadStateFromHash();
 
 // Show images after positioning is complete
 imageWrappers.forEach(wrapper => {
