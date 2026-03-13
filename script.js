@@ -295,10 +295,19 @@ function preloadBackImages() {
 }
 
 preloadBackImages();
-initializeGrid();
-centerImages();
-// Recalculate grid origin after centering
-recalculateGridOrigin();
+
+// Check if loading from URL hash
+const hasUrlState = window.location.hash.length > 1;
+
+if (!hasUrlState) {
+    // Normal initialization - shuffle and center
+    initializeGrid();
+    centerImages();
+    recalculateGridOrigin();
+} else {
+    // Loading from URL - just initialize grid structure
+    initializeGrid();
+}
 
 // Load state from URL hash if present
 loadStateFromHash();
