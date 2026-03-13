@@ -61,6 +61,8 @@ document.addEventListener('keydown', handleKeyPress);
 document.getElementById('centerBtn').addEventListener('click', centerImages);
 document.getElementById('selectAllBtn').addEventListener('click', toggleSelectAll);
 document.getElementById('newGameBtn').addEventListener('click', newGame);
+document.getElementById('undoBtn').addEventListener('click', undo);
+document.getElementById('redoBtn').addEventListener('click', redo);
 document.getElementById('saveBtn').addEventListener('click', saveState);
 document.getElementById('restoreBtn').addEventListener('click', restoreState);
 document.getElementById('copyLinkBtn').addEventListener('click', copyLinkToClipboard);
