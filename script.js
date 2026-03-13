@@ -599,8 +599,10 @@ function drag(e) {
                     rel.element.style.top = (newTop + rel.dy) + 'px';
                 });
 
-                // Update drag preview for first selected image
-                updateDragPreview(newLeft, newTop);
+                // Only show drag preview if not all images are selected
+                if (relativePositions.length < imageWrappers.length) {
+                    updateDragPreview(newLeft, newTop);
+                }
             } else {
                 // Move single image
                 const newLeft = e.clientX - offsetX;
