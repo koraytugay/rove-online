@@ -193,6 +193,9 @@ function loadStateFromHash() {
 }
 
 function newGame() {
+    // Clear URL hash
+    window.history.replaceState(null, '', window.location.pathname);
+
     // Reset all images to front side
     imageWrappers.forEach((wrapper, index) => {
         const img = wrapper.querySelector('.draggable');
@@ -204,19 +207,23 @@ function newGame() {
     // Clear selections
     selectedImages.clear();
 
-    // Shuffle positions
-    shuffleImagePositions();
+    showToast('Shuffling...');
 
-    // Center images
-    centerImages();
+    // Shuffle 10 times with 0.2 second delay between each
+    let shuffleCount = 0;
+    const shuffleInterval = setInterval(() => {
+        shuffleImagePositions();
+        centerImages();
+        recalculateGridOrigin();
 
-    // Recalculate grid origin
-    recalculateGridOrigin();
-
-    // Add to history
-    addToHistory();
-
-    showToast('New Game Started');
+        shuffleCount++;
+        if (shuffleCount >= 10) {
+            clearInterval(shuffleInterval);
+            // Add final state to history
+            addToHistory();
+            showToast('New Game Started');
+        }
+    }, 200);
 }
 
 // Randomize which image goes in which position
