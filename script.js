@@ -312,6 +312,11 @@ function initializeAfterImageLoad() {
     IMAGE_WIDTH = rect.width;
     IMAGE_HEIGHT = rect.height;
 
+    // Disable transitions during initialization
+    imageWrappers.forEach(wrapper => {
+        wrapper.style.transition = 'none';
+    });
+
     // Check if loading from URL hash
     const hasUrlState = window.location.hash.length > 1;
 
@@ -326,6 +331,13 @@ function initializeAfterImageLoad() {
 
     // Load state from URL hash if present
     loadStateFromHash();
+
+    // Re-enable transitions after a brief delay
+    setTimeout(() => {
+        imageWrappers.forEach(wrapper => {
+            wrapper.style.transition = '';
+        });
+    }, 50);
 
     // Show images after positioning is complete
     imageWrappers.forEach(wrapper => {
@@ -343,6 +355,14 @@ if (firstImage.complete && firstImage.naturalHeight !== 0) {
 } else {
     // Wait for image to load
     firstImage.addEventListener('load', initializeAfterImageLoad);
+
+    // Fallback timeout in case load event never fires
+    setTimeout(() => {
+        if (IMAGE_WIDTH === 0) {
+            console.warn('Image load timeout, initializing anyway');
+            initializeAfterImageLoad();
+        }
+    }, 2000);
 }
 
 // Grid overlay functionality
