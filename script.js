@@ -298,29 +298,38 @@ function preloadBackImages() {
 
 preloadBackImages();
 
-// Check if loading from URL hash
-const hasUrlState = window.location.hash.length > 1;
+// Wait for first image to load before initializing
+const firstImage = imageWrappers[0].querySelector('.draggable');
+firstImage.addEventListener('load', () => {
+    // Check if loading from URL hash
+    const hasUrlState = window.location.hash.length > 1;
 
-if (!hasUrlState) {
-    // Normal initialization - shuffle and center
-    initializeGrid();
-    centerImages();
-    recalculateGridOrigin();
-} else {
-    // Loading from URL - just initialize grid structure
-    initializeGrid();
-}
+    if (!hasUrlState) {
+        // Normal initialization - shuffle and center
+        initializeGrid();
+        centerImages();
+        recalculateGridOrigin();
+    } else {
+        // Loading from URL - just initialize grid structure
+        initializeGrid();
+    }
 
-// Load state from URL hash if present
-loadStateFromHash();
+    // Load state from URL hash if present
+    loadStateFromHash();
 
-// Show images after positioning is complete
-imageWrappers.forEach(wrapper => {
-    wrapper.classList.add('loaded');
+    // Show images after positioning is complete
+    imageWrappers.forEach(wrapper => {
+        wrapper.classList.add('loaded');
+    });
+
+    // Initialize history with initial state
+    addToHistory();
 });
 
-// Initialize history with initial state
-addToHistory();
+// Trigger load event if image is already cached
+if (firstImage.complete) {
+    firstImage.dispatchEvent(new Event('load'));
+}
 
 // Grid overlay functionality
 function createGridOverlay() {
