@@ -61,6 +61,7 @@ document.addEventListener('keydown', handleKeyPress);
 // Add button event listeners
 document.getElementById('centerBtn').addEventListener('click', centerImages);
 document.getElementById('selectAllBtn').addEventListener('click', toggleSelectAll);
+document.getElementById('newGameBtn').addEventListener('click', newGame);
 document.getElementById('saveBtn').addEventListener('click', saveState);
 document.getElementById('restoreBtn').addEventListener('click', restoreState);
 document.getElementById('copyLinkBtn').addEventListener('click', copyLinkToClipboard);
@@ -87,6 +88,8 @@ function handleKeyPress(e) {
         toggleSelectAll();
     } else if (e.key === 'c' || e.key === 'C') {
         centerImages();
+    } else if (e.key === 'n' || e.key === 'N') {
+        newGame();
     } else if (e.key === 's' || e.key === 'S') {
         saveState();
     } else if (e.key === 'r' || e.key === 'R') {
@@ -187,6 +190,33 @@ function loadStateFromHash() {
             console.error('Failed to load state from hash:', err);
         }
     }
+}
+
+function newGame() {
+    // Reset all images to front side
+    imageWrappers.forEach((wrapper, index) => {
+        const img = wrapper.querySelector('.draggable');
+        const imageName = img.dataset.name;
+        img.src = `resources/${imageName}-front.png`;
+        img.classList.remove('selected');
+    });
+
+    // Clear selections
+    selectedImages.clear();
+
+    // Shuffle positions
+    shuffleImagePositions();
+
+    // Center images
+    centerImages();
+
+    // Recalculate grid origin
+    recalculateGridOrigin();
+
+    // Add to history
+    addToHistory();
+
+    showToast('New Game Started');
 }
 
 // Randomize which image goes in which position
