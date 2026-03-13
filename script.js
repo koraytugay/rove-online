@@ -175,6 +175,9 @@ function loadStateFromHash() {
             const stateJson = atob(hash);
             const state = JSON.parse(stateJson);
             applyState(state);
+            // Center images to fix any positioning issues
+            centerImages();
+            recalculateGridOrigin();
             // Delay toast slightly to ensure page is ready
             setTimeout(() => {
                 showToast('Loaded State from URL');
