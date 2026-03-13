@@ -65,6 +65,7 @@ document.getElementById('newGameBtn').addEventListener('click', newGame);
 document.getElementById('saveBtn').addEventListener('click', saveState);
 document.getElementById('restoreBtn').addEventListener('click', restoreState);
 document.getElementById('copyLinkBtn').addEventListener('click', copyLinkToClipboard);
+document.getElementById('gridBtn').addEventListener('click', toggleGridOverlay);
 document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
 document.getElementById('hideBtn').addEventListener('click', toggleButtons);
 
@@ -328,25 +329,67 @@ function createGridOverlay() {
     const gridOverlay = document.getElementById('gridOverlay');
     if (!gridOverlay) return;
 
-    // Clear existing dots
+    // Clear existing overlays
     gridOverlay.innerHTML = '';
 
-    // Calculate how many grid points we need to cover the viewport
+    // Calculate viewport dimensions
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // Calculate grid starting positions
-    const startX = GRID_ORIGIN_X % GRID_SPACING_X;
-    const startY = GRID_ORIGIN_Y % GRID_SPACING_Y;
+    // Get all current image positions to avoid showing previews there
+    const occupiedPositions = new Set();
+    imageWrappers.forEach(wrapper => {
+        const wrapperLeft = parseFloat(wrapper.style.left);
+        const wrapperTop = parseFloat(wrapper.style.top);
+        const centerX = wrapperLeft + IMAGE_WIDTH / 2;
+        const centerY = wrapperTop + IMAGE_HEIGHT / 2;
 
-    // Create grid dots
-    for (let x = startX; x < viewportWidth; x += GRID_SPACING_X) {
-        for (let y = startY; y < viewportHeight; y += GRID_SPACING_Y) {
-            const dot = document.createElement('div');
-            dot.className = 'grid-dot';
-            dot.style.left = x + 'px';
-            dot.style.top = y + 'px';
-            gridOverlay.appendChild(dot);
+        const offsetFromOriginX = centerX - GRID_ORIGIN_X;
+        const offsetFromOriginY = centerY - GRID_ORIGIN_Y;
+
+        const gridIndexX = Math.round(offsetFromOriginX / GRID_SPACING_X);
+        const gridIndexY = Math.round(offsetFromOriginY / GRID_SPACING_Y);
+
+        occupiedPositions.add(`${gridIndexX},${gridIndexY}`);
+    });
+
+    // Show rectangles at all grid positions that aren't occupied
+    const startX = Math.floor((0 - GRID_ORIGIN_X) / GRID_SPACING_X) - 1;
+    const endX = Math.ceil((viewportWidth - GRID_ORIGIN_X) / GRID_SPACING_X) + 1;
+    const startY = Math.floor((0 - GRID_ORIGIN_Y) / GRID_SPACING_Y) - 1;
+    const endY = Math.ceil((viewportHeight - GRID_ORIGIN_Y) / GRID_SPACING_Y) + 1;
+
+    for (let gridX = startX; gridX <= endX; gridX++) {
+        for (let gridY = startY; gridY <= endY; gridY++) {
+            // Skip if this position is occupied
+            if (occupiedPositions.has(`${gridX},${gridY}`)) {
+                continue;
+            }
+
+            const centerX = GRID_ORIGIN_X + gridX * GRID_SPACING_X;
+            const centerY = GRID_ORIGIN_Y + gridY * GRID_SPACING_Y;
+
+            const rectLeft = centerX - IMAGE_WIDTH / 2;
+            const rectTop = centerY - IMAGE_HEIGHT / 2;
+
+            // Only show if within viewport
+            if (rectLeft + IMAGE_WIDTH > 0 && rectLeft < viewportWidth &&
+                rectTop + IMAGE_HEIGHT > 0 && rectTop < viewportHeight) {
+
+                const rect = document.createElement('div');
+                rect.className = 'grid-rect';
+                rect.style.position = 'absolute';
+                rect.style.width = IMAGE_WIDTH + 'px';
+                rect.style.height = IMAGE_HEIGHT + 'px';
+                rect.style.border = '2px dashed rgba(255, 255, 255, 0.3)';
+                rect.style.borderRadius = '8px';
+                rect.style.pointerEvents = 'none';
+                rect.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                rect.style.left = rectLeft + 'px';
+                rect.style.top = rectTop + 'px';
+
+                gridOverlay.appendChild(rect);
+            }
         }
     }
 }
