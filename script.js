@@ -9,6 +9,17 @@ let dragStartX = 0;
 let dragStartY = 0;
 let originalDragPosition = { left: 0, top: 0 };
 
+// Undo/Redo system
+let history = [];
+let historyIndex = -1;
+const MAX_HISTORY = 50;
+
+// Zoom system
+let zoomLevel = 1;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2;
+const ZOOM_STEP = 0.1;
+
 // Grid configuration - spacing based on initial layout
 const GRID_SPACING_X = 250; // Horizontal spacing between image centers
 const GRID_SPACING_Y = 175; // Vertical spacing between image centers
@@ -85,6 +96,14 @@ function handleKeyPress(e) {
         toggleFullscreen();
     } else if (e.key === 'h' || e.key === 'H') {
         toggleButtons();
+    } else if (e.key === 'ArrowLeft') {
+        undo();
+    } else if (e.key === 'ArrowRight') {
+        redo();
+    } else if (e.key === '+' || e.key === '=') {
+        zoomIn();
+    } else if (e.key === '-' || e.key === '_') {
+        zoomOut();
     }
 }
 
@@ -225,6 +244,9 @@ imageWrappers.forEach(wrapper => {
     wrapper.classList.add('loaded');
 });
 
+// Initialize history with initial state
+addToHistory();
+
 // Grid overlay functionality
 function createGridOverlay() {
     const gridOverlay = document.getElementById('gridOverlay');
@@ -320,6 +342,145 @@ function showToast(message) {
     }, 3000);
 }
 
+// Undo/Redo system
+function captureState() {
+    return {
+        images: Array.from(imageWrappers).map(wrapper => {
+            const img = wrapper.querySelector('.draggable');
+            return {
+                id: wrapper.id,
+                left: wrapper.style.left,
+                top: wrapper.style.top,
+                src: img.src
+            };
+        }),
+        gridOrigin: {
+            x: GRID_ORIGIN_X,
+            y: GRID_ORIGIN_Y
+        }
+    };
+}
+
+function applyState(state) {
+    if (!state) return;
+
+    state.images.forEach(imgState => {
+        const wrapper = document.getElementById(imgState.id);
+        if (wrapper) {
+            wrapper.style.left = imgState.left;
+            wrapper.style.top = imgState.top;
+            const img = wrapper.querySelector('.draggable');
+            if (img) {
+                img.src = imgState.src;
+            }
+        }
+    });
+
+    if (state.gridOrigin) {
+        GRID_ORIGIN_X = state.gridOrigin.x;
+        GRID_ORIGIN_Y = state.gridOrigin.y;
+        const gridOverlay = document.getElementById('gridOverlay');
+        if (gridOverlay && gridOverlay.classList.contains('visible')) {
+            createGridOverlay();
+        }
+    }
+}
+
+function addToHistory() {
+    const currentState = captureState();
+
+    // Check if state actually changed compared to last history entry
+    if (history.length > 0) {
+        const lastState = history[historyIndex];
+        if (statesAreEqual(currentState, lastState)) {
+            // No change, don't add to history
+            return;
+        }
+    }
+
+    // Remove any states after current index (when making new change after undo)
+    history = history.slice(0, historyIndex + 1);
+
+    // Add new state
+    history.push(currentState);
+
+    // Limit history size
+    if (history.length > MAX_HISTORY) {
+        history.shift();
+    } else {
+        historyIndex++;
+    }
+}
+
+function statesAreEqual(state1, state2) {
+    if (!state1 || !state2) return false;
+
+    // Check if grid origins are the same
+    if (state1.gridOrigin.x !== state2.gridOrigin.x ||
+        state1.gridOrigin.y !== state2.gridOrigin.y) {
+        return false;
+    }
+
+    // Check if all image positions and sources are the same
+    if (state1.images.length !== state2.images.length) return false;
+
+    for (let i = 0; i < state1.images.length; i++) {
+        const img1 = state1.images[i];
+        const img2 = state2.images[i];
+
+        if (img1.id !== img2.id ||
+            img1.left !== img2.left ||
+            img1.top !== img2.top ||
+            img1.src !== img2.src) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function undo() {
+    if (historyIndex > 0) {
+        historyIndex--;
+        applyState(history[historyIndex]);
+        showToast('Undo');
+    }
+}
+
+function redo() {
+    if (historyIndex < history.length - 1) {
+        historyIndex++;
+        applyState(history[historyIndex]);
+        showToast('Redo');
+    }
+}
+
+// Zoom controls
+function zoomIn() {
+    if (zoomLevel < MAX_ZOOM) {
+        zoomLevel = Math.min(MAX_ZOOM, zoomLevel + ZOOM_STEP);
+        applyZoom();
+        showToast(`Zoom: ${Math.round(zoomLevel * 100)}%`);
+    }
+}
+
+function zoomOut() {
+    if (zoomLevel > MIN_ZOOM) {
+        zoomLevel = Math.max(MIN_ZOOM, zoomLevel - ZOOM_STEP);
+        applyZoom();
+        showToast(`Zoom: ${Math.round(zoomLevel * 100)}%`);
+    }
+}
+
+function applyZoom() {
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.transform = `scale(${zoomLevel})`;
+        container.style.transformOrigin = 'center center';
+    }
+}
+
+
 function toggleSelectAll() {
     if (selectedImages.size === imageWrappers.length) {
         // Deselect all
@@ -356,6 +517,7 @@ function handleImageClick(e, wrapper) {
 }
 
 function flipImage(img) {
+    addToHistory();
 
     const imageName = img.dataset.name;
     const currentSrc = img.src;
@@ -436,16 +598,70 @@ function drag(e) {
                     rel.element.style.left = (newLeft + rel.dx) + 'px';
                     rel.element.style.top = (newTop + rel.dy) + 'px';
                 });
+
+                // Update drag preview for first selected image
+                updateDragPreview(newLeft, newTop);
             } else {
                 // Move single image
-                activeElement.style.left = (e.clientX - offsetX) + 'px';
-                activeElement.style.top = (e.clientY - offsetY) + 'px';
+                const newLeft = e.clientX - offsetX;
+                const newTop = e.clientY - offsetY;
+                activeElement.style.left = newLeft + 'px';
+                activeElement.style.top = newTop + 'px';
+
+                // Update drag preview
+                updateDragPreview(newLeft, newTop);
             }
         }
     }
 }
 
+function updateDragPreview(left, top) {
+    // Calculate where the image will snap to
+    const tempWrapper = document.createElement('div');
+    tempWrapper.style.left = left + 'px';
+    tempWrapper.style.top = top + 'px';
+
+    const centerX = left + IMAGE_WIDTH / 2;
+    const centerY = top + IMAGE_HEIGHT / 2;
+
+    const offsetFromOriginX = centerX - GRID_ORIGIN_X;
+    const offsetFromOriginY = centerY - GRID_ORIGIN_Y;
+
+    const gridIndexX = Math.round(offsetFromOriginX / GRID_SPACING_X);
+    const gridIndexY = Math.round(offsetFromOriginY / GRID_SPACING_Y);
+
+    const nearestGridX = GRID_ORIGIN_X + gridIndexX * GRID_SPACING_X;
+    const nearestGridY = GRID_ORIGIN_Y + gridIndexY * GRID_SPACING_Y;
+
+    const snappedLeft = nearestGridX - IMAGE_WIDTH / 2;
+    const snappedTop = nearestGridY - IMAGE_HEIGHT / 2;
+
+    // Create or update preview
+    let preview = document.getElementById('dragPreview');
+    if (!preview) {
+        preview = document.createElement('div');
+        preview.id = 'dragPreview';
+        preview.style.position = 'absolute';
+        preview.style.width = IMAGE_WIDTH + 'px';
+        preview.style.height = IMAGE_HEIGHT + 'px';
+        preview.style.border = '3px dashed rgba(255, 255, 255, 0.5)';
+        preview.style.borderRadius = '8px';
+        preview.style.pointerEvents = 'none';
+        preview.style.zIndex = '999';
+        preview.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+        document.querySelector('.container').appendChild(preview);
+    }
+
+    preview.style.left = snappedLeft + 'px';
+    preview.style.top = snappedTop + 'px';
+}
+
 function stopDrag(e) {
+    // Remove drag preview
+    const dragPreview = document.getElementById('dragPreview');
+    if (dragPreview) {
+        dragPreview.remove();
+    }
 
     if (activeElement && isDragging) {
         // Remove dragging class
@@ -461,6 +677,8 @@ function stopDrag(e) {
             const dropTarget = getImageUnderMouse(e.clientX, e.clientY, activeElement);
             if (dropTarget && dropTarget !== activeElement) {
                 swapImagePositions(activeElement, dropTarget);
+                // Add to history after swap
+                addToHistory();
                 activeElement.style.zIndex = 1;
                 activeElement = null;
                 relativePositions = [];
@@ -486,6 +704,9 @@ function stopDrag(e) {
                 snapToGrid(activeElement);
             }
         }
+
+        // Add to history AFTER snapping/grid recalculation
+        addToHistory();
 
         activeElement.style.zIndex = 1;
         activeElement = null;
