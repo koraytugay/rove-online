@@ -53,6 +53,7 @@ document.getElementById('selectAllBtn').addEventListener('click', toggleSelectAl
 document.getElementById('saveBtn').addEventListener('click', saveState);
 document.getElementById('restoreBtn').addEventListener('click', restoreState);
 document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+document.getElementById('hideBtn').addEventListener('click', toggleButtons);
 
 function handleBackgroundClick(e) {
     // Check if click is not on an image or button
@@ -82,6 +83,8 @@ function handleKeyPress(e) {
         toggleGridOverlay();
     } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
+    } else if (e.key === 'h' || e.key === 'H') {
+        toggleButtons();
     }
 }
 
@@ -283,6 +286,14 @@ function toggleFullscreen() {
         if (document.exitFullscreen) {
             document.exitFullscreen();
         }
+    }
+}
+
+// Toggle button visibility
+function toggleButtons() {
+    const buttonContainer = document.querySelector('.button-container');
+    if (buttonContainer) {
+        buttonContainer.classList.toggle('hidden');
     }
 }
 
