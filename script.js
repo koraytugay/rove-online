@@ -104,6 +104,8 @@ function saveState() {
             y: GRID_ORIGIN_Y
         }
     };
+
+    showToast('State Saved');
 }
 
 function restoreState() {
@@ -297,6 +299,27 @@ function toggleButtons() {
     }
 }
 
+// Toast notification
+let toastTimeout = null;
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.classList.add('show');
+
+    // Clear existing timeout
+    if (toastTimeout) {
+        clearTimeout(toastTimeout);
+    }
+
+    // Hide after 3 seconds
+    toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+        toastTimeout = null;
+    }, 3000);
+}
+
 function toggleSelectAll() {
     if (selectedImages.size === imageWrappers.length) {
         // Deselect all
@@ -360,6 +383,7 @@ function flipImage(img) {
 function startDrag(e, wrapper) {
     activeElement = wrapper;
     activeElement.style.zIndex = 1000;
+    activeElement.classList.add('dragging');
     isDragging = false;
     dragStartX = e.clientX;
     dragStartY = e.clientY;
@@ -376,6 +400,8 @@ function startDrag(e, wrapper) {
     if (selectedImages.size > 0 && selectedImages.has(activeElement)) {
         const activeRect = activeElement.getBoundingClientRect();
         relativePositions = Array.from(selectedImages).map(wrapper => {
+            // Add dragging class to all selected images
+            wrapper.classList.add('dragging');
             const wrapperRect = wrapper.getBoundingClientRect();
             return {
                 element: wrapper,
@@ -422,6 +448,14 @@ function drag(e) {
 function stopDrag(e) {
 
     if (activeElement && isDragging) {
+        // Remove dragging class
+        activeElement.classList.remove('dragging');
+        if (relativePositions.length > 0) {
+            relativePositions.forEach(rel => {
+                rel.element.classList.remove('dragging');
+            });
+        }
+
         // Check if dropped on another wrapper (only for single wrapper drag, not multiple selection)
         if (relativePositions.length === 0) {
             const dropTarget = getImageUnderMouse(e.clientX, e.clientY, activeElement);
@@ -457,6 +491,7 @@ function stopDrag(e) {
         activeElement = null;
         relativePositions = [];
     } else if (activeElement) {
+        activeElement.classList.remove('dragging');
         activeElement.style.zIndex = 1;
         activeElement = null;
         relativePositions = [];
