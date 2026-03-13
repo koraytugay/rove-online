@@ -29,7 +29,6 @@ let IMAGE_WIDTH = 0; // Store actual unscaled image width
 let IMAGE_HEIGHT = 0; // Store actual unscaled image height
 
 const imageWrappers = document.querySelectorAll('.image-wrapper');
-const draggables = document.querySelectorAll('.draggable');
 
 // Now we drag the wrappers, not the images
 imageWrappers.forEach((wrapper, index) => {
@@ -186,7 +185,14 @@ function loadStateFromHash() {
     }
 }
 
+// Track if shuffle is in progress to prevent multiple simultaneous shuffles
+let isShuffling = false;
+
 function newGame() {
+    // Prevent multiple shuffles at once
+    if (isShuffling) return;
+    isShuffling = true;
+
     // Clear URL hash
     window.history.replaceState(null, '', window.location.pathname);
 
@@ -216,6 +222,7 @@ function newGame() {
             // Add final state to history
             addToHistory();
             showToast('New Game Started');
+            isShuffling = false;
         }
     }, 200);
 }
@@ -262,7 +269,6 @@ function initializeGrid() {
 
 // Recalculate grid origin based on current image positions
 function recalculateGridOrigin() {
-
     // Use the first wrapper's center as grid origin
     const firstWrapper = imageWrappers[0];
     const firstLeft = parseFloat(firstWrapper.style.left);
@@ -272,20 +278,8 @@ function recalculateGridOrigin() {
     GRID_ORIGIN_X = firstLeft + IMAGE_WIDTH / 2;
     GRID_ORIGIN_Y = firstTop + IMAGE_HEIGHT / 2;
 
-
-    // Log all wrapper centers to verify grid alignment
-    imageWrappers.forEach((wrapper, idx) => {
-        const wrapperLeft = parseFloat(wrapper.style.left);
-        const wrapperTop = parseFloat(wrapper.style.top);
-        const wrapperCenterX = wrapperLeft + IMAGE_WIDTH / 2;
-        const wrapperCenterY = wrapperTop + IMAGE_HEIGHT / 2;
-    });
-
     // Update grid overlay if visible
-    const gridOverlay = document.getElementById('gridOverlay');
-    if (gridOverlay && gridOverlay.classList.contains('visible')) {
-        createGridOverlay();
-    }
+    updateGridOverlayIfVisible();
 }
 
 // Preload all back images
@@ -632,11 +626,8 @@ function handleImageClick(e, wrapper) {
 }
 
 function flipImage(img) {
-    addToHistory();
-
     const imageName = img.dataset.name;
     const currentSrc = img.src;
-
 
     // Add flip animation
     img.classList.add('flipping');
@@ -650,11 +641,12 @@ function flipImage(img) {
         }
     }, 300);
 
-    // Remove animation class after it completes
+    // Remove animation class after it completes and add to history
     setTimeout(() => {
         img.classList.remove('flipping');
+        // Add to history after flip is complete
+        addToHistory();
     }, 600);
-
 }
 
 function startDrag(e, wrapper) {
