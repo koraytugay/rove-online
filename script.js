@@ -86,20 +86,27 @@ function handleKeyPress(e) {
 }
 
 function saveState() {
-    savedState = Array.from(imageWrappers).map(wrapper => {
-        const img = wrapper.querySelector('.draggable');
-        return {
-            id: wrapper.id,
-            left: wrapper.style.left,
-            top: wrapper.style.top,
-            src: img.src
-        };
-    });
+    savedState = {
+        images: Array.from(imageWrappers).map(wrapper => {
+            const img = wrapper.querySelector('.draggable');
+            return {
+                id: wrapper.id,
+                left: wrapper.style.left,
+                top: wrapper.style.top,
+                src: img.src
+            };
+        }),
+        gridOrigin: {
+            x: GRID_ORIGIN_X,
+            y: GRID_ORIGIN_Y
+        }
+    };
 }
 
 function restoreState() {
     if (savedState) {
-        savedState.forEach(state => {
+        // Restore image positions and orientations
+        savedState.images.forEach(state => {
             const wrapper = document.getElementById(state.id);
             if (wrapper) {
                 wrapper.style.left = state.left;
@@ -110,6 +117,18 @@ function restoreState() {
                 }
             }
         });
+
+        // Restore grid origin
+        if (savedState.gridOrigin) {
+            GRID_ORIGIN_X = savedState.gridOrigin.x;
+            GRID_ORIGIN_Y = savedState.gridOrigin.y;
+
+            // Update grid overlay if visible
+            const gridOverlay = document.getElementById('gridOverlay');
+            if (gridOverlay && gridOverlay.classList.contains('visible')) {
+                createGridOverlay();
+            }
+        }
     }
 }
 
