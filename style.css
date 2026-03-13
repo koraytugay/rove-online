@@ -12,6 +12,7 @@ body {
     overflow: hidden;
 }
 
+/* OPTION 4 - Mars rover gradient (saved for later)
 .button-container {
     position: fixed;
     top: 20px;
@@ -22,6 +23,57 @@ body {
     z-index: 2000;
     opacity: 1;
     transition: opacity 0.3s ease;
+    backdrop-filter: blur(10px);
+    background: rgba(40, 35, 30, 0.7);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(210, 105, 60, 0.4);
+}
+
+.button-container button {
+    padding: 8px 16px;
+    background: linear-gradient(145deg, rgba(210, 105, 60, 0.9), rgba(180, 85, 50, 0.9));
+    color: #f4e4d4;
+    border: 1px solid rgba(255, 140, 60, 0.5);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: normal;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 180, 120, 0.3);
+    transition: all 0.2s ease;
+    width: 130px;
+    text-align: center;
+}
+
+.button-container button:hover {
+    background: linear-gradient(145deg, rgba(230, 115, 70, 0.95), rgba(200, 95, 60, 0.95));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 180, 120, 0.4);
+}
+
+.button-container button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 180, 120, 0.2);
+}
+*/
+
+/* OPTION 3 - Metallic/Rover control panel (ACTIVE) */
+.button-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(8px);
+    background: rgba(40, 35, 30, 0.85);
+    padding: 15px;
+    border-radius: 12px;
+    border: 2px solid rgba(210, 105, 60, 0.6);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(255, 140, 60, 0.1);
 }
 
 .button-container.hidden {
@@ -30,29 +82,30 @@ body {
 }
 
 .button-container button {
-    padding: 8px 16px;
-    background-color: rgba(255, 255, 255, 0.9);
-    color: #4a4a4a;
-    border: 2px solid #000000;
-    border-radius: 8px;
+    padding: 10px 16px;
+    background: rgba(40, 35, 30, 0.9);
+    color: #f4e4d4;
+    border: 2px solid rgba(210, 105, 60, 0.6);
+    border-radius: 6px;
     font-size: 14px;
     font-weight: normal;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5), inset 0 -2px 4px rgba(0, 0, 0, 0.3);
     transition: all 0.2s ease;
     width: 130px;
     text-align: center;
 }
 
 .button-container button:hover {
-    background-color: rgba(255, 255, 255, 1);
+    background: rgba(50, 45, 40, 0.95);
+    border-color: rgba(230, 115, 60, 0.8);
     transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(255, 140, 60, 0.2);
 }
 
 .button-container button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .container {
