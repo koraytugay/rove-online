@@ -177,8 +177,8 @@ function loadStateFromHash() {
             const stateJson = atob(hash);
             const state = JSON.parse(stateJson);
             applyState(state);
-            // Center images to fix any positioning issues
-            centerImages();
+            // Don't center - URL state already has correct positions
+            // Just recalculate grid based on loaded positions
             recalculateGridOrigin();
             // Delay toast slightly to ensure page is ready
             setTimeout(() => {
@@ -304,7 +304,8 @@ shuffleImagePositions();
 
 // Wait for first image to load before calculating dimensions and centering
 const firstImage = imageWrappers[0].querySelector('.draggable');
-firstImage.addEventListener('load', () => {
+
+function initializeAfterImageLoad() {
     // Store image dimensions from the first wrapper
     const firstWrapper = imageWrappers[0];
     const rect = firstWrapper.getBoundingClientRect();
@@ -333,11 +334,15 @@ firstImage.addEventListener('load', () => {
 
     // Initialize history with initial state
     addToHistory();
-});
+}
 
-// Trigger load event if image is already cached
-if (firstImage.complete) {
-    firstImage.dispatchEvent(new Event('load'));
+// Check if image is already loaded
+if (firstImage.complete && firstImage.naturalHeight !== 0) {
+    // Image already loaded, initialize immediately
+    initializeAfterImageLoad();
+} else {
+    // Wait for image to load
+    firstImage.addEventListener('load', initializeAfterImageLoad);
 }
 
 // Grid overlay functionality
