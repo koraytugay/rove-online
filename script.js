@@ -14,12 +14,6 @@ let history = [];
 let historyIndex = -1;
 const MAX_HISTORY = 50;
 
-// Zoom system
-let zoomLevel = 1;
-const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 2;
-const ZOOM_STEP = 0.1;
-
 // Grid configuration - spacing based on initial layout
 const GRID_SPACING_X = 250; // Horizontal spacing between image centers
 const GRID_SPACING_Y = 175; // Vertical spacing between image centers
@@ -108,10 +102,6 @@ function handleKeyPress(e) {
         undo();
     } else if (e.key === 'ArrowRight') {
         redo();
-    } else if (e.key === '+' || e.key === '=') {
-        zoomIn();
-    } else if (e.key === '-' || e.key === '_') {
-        zoomOut();
     }
 }
 
@@ -629,32 +619,6 @@ function redo() {
         showToast('Redo');
     }
 }
-
-// Zoom controls
-function zoomIn() {
-    if (zoomLevel < MAX_ZOOM) {
-        zoomLevel = Math.min(MAX_ZOOM, zoomLevel + ZOOM_STEP);
-        applyZoom();
-        showToast(`Zoom: ${Math.round(zoomLevel * 100)}%`);
-    }
-}
-
-function zoomOut() {
-    if (zoomLevel > MIN_ZOOM) {
-        zoomLevel = Math.max(MIN_ZOOM, zoomLevel - ZOOM_STEP);
-        applyZoom();
-        showToast(`Zoom: ${Math.round(zoomLevel * 100)}%`);
-    }
-}
-
-function applyZoom() {
-    const container = document.querySelector('.container');
-    if (container) {
-        container.style.transform = `scale(${zoomLevel})`;
-        container.style.transformOrigin = 'center center';
-    }
-}
-
 
 function toggleSelectAll() {
     if (selectedImages.size === imageWrappers.length) {

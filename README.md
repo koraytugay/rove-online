@@ -27,7 +27,6 @@ You can select multiple modules and move at once - helpful for the "motor" modul
 
 ### Display Options
 - **Fullscreen (F)** - Toggle fullscreen mode for distraction-free play
-- **Zoom (+/-)** - Zoom in and out (0.5x to 2x) using + and - keys
 - **Show/Hide Buttons (H)** - Hide the button panel for a cleaner interface
 
 ### Visual Feedback
