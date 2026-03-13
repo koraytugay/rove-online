@@ -298,20 +298,29 @@ function preloadBackImages() {
 
 preloadBackImages();
 
-// Wait for first image to load before initializing
+// Immediately shuffle positions to override CSS (before images load)
+// This prevents showing CSS positions while waiting for images
+shuffleImagePositions();
+
+// Wait for first image to load before calculating dimensions and centering
 const firstImage = imageWrappers[0].querySelector('.draggable');
 firstImage.addEventListener('load', () => {
+    // Store image dimensions from the first wrapper
+    const firstWrapper = imageWrappers[0];
+    const rect = firstWrapper.getBoundingClientRect();
+    IMAGE_WIDTH = rect.width;
+    IMAGE_HEIGHT = rect.height;
+
     // Check if loading from URL hash
     const hasUrlState = window.location.hash.length > 1;
 
     if (!hasUrlState) {
-        // Normal initialization - shuffle and center
-        initializeGrid();
+        // Normal initialization - center and calculate grid
         centerImages();
         recalculateGridOrigin();
     } else {
-        // Loading from URL - just initialize grid structure
-        initializeGrid();
+        // Loading from URL - just calculate initial grid
+        recalculateGridOrigin();
     }
 
     // Load state from URL hash if present
