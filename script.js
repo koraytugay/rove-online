@@ -136,30 +136,20 @@ function saveState() {
 
 function restoreState() {
     if (savedState) {
-        // Restore image positions and orientations
-        savedState.images.forEach(state => {
-            const wrapper = document.getElementById(state.id);
-            if (wrapper) {
-                wrapper.style.left = state.left;
-                wrapper.style.top = state.top;
-                const img = wrapper.querySelector('.draggable');
-                if (img) {
-                    img.src = state.src;
-                }
-            }
+        // Clear selections
+        selectedImages.clear();
+        imageWrappers.forEach(wrapper => {
+            const img = wrapper.querySelector('.draggable');
+            img.classList.remove('selected');
         });
 
-        // Restore grid origin
-        if (savedState.gridOrigin) {
-            GRID_ORIGIN_X = savedState.gridOrigin.x;
-            GRID_ORIGIN_Y = savedState.gridOrigin.y;
+        // Use applyState for consistency
+        applyState(savedState);
 
-            // Update grid overlay if visible
-            const gridOverlay = document.getElementById('gridOverlay');
-            if (gridOverlay && gridOverlay.classList.contains('visible')) {
-                createGridOverlay();
-            }
-        }
+        // Add to history after restore
+        addToHistory();
+
+        showToast('State Restored');
     }
 }
 
@@ -408,6 +398,13 @@ function toggleGridOverlay() {
     }
 }
 
+function updateGridOverlayIfVisible() {
+    const gridOverlay = document.getElementById('gridOverlay');
+    if (gridOverlay && gridOverlay.classList.contains('visible')) {
+        createGridOverlay();
+    }
+}
+
 // Initialize grid overlay on page load
 setTimeout(() => {
     createGridOverlay();
@@ -498,10 +495,9 @@ function applyState(state) {
     if (state.gridOrigin) {
         GRID_ORIGIN_X = state.gridOrigin.x;
         GRID_ORIGIN_Y = state.gridOrigin.y;
-        const gridOverlay = document.getElementById('gridOverlay');
-        if (gridOverlay && gridOverlay.classList.contains('visible')) {
-            createGridOverlay();
-        }
+
+        // Update grid overlay if visible
+        updateGridOverlayIfVisible();
     }
 }
 
@@ -800,6 +796,8 @@ function stopDrag(e) {
                 swapImagePositions(activeElement, dropTarget);
                 // Add to history after swap
                 addToHistory();
+                // Update grid overlay if visible
+                updateGridOverlayIfVisible();
                 activeElement.style.zIndex = 1;
                 activeElement = null;
                 relativePositions = [];
@@ -828,6 +826,9 @@ function stopDrag(e) {
 
         // Add to history AFTER snapping/grid recalculation
         addToHistory();
+
+        // Update grid overlay if visible
+        updateGridOverlayIfVisible();
 
         activeElement.style.zIndex = 1;
         activeElement = null;
