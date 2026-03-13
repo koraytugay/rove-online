@@ -187,6 +187,11 @@ function loadStateFromHash() {
         } catch (err) {
             console.error('Failed to load state from hash:', err);
         }
+    } else {
+        // If no hash but we expected one, just calculate grid
+        if (GRID_ORIGIN_X === 0 && IMAGE_WIDTH > 0) {
+            recalculateGridOrigin();
+        }
     }
 }
 
@@ -298,14 +303,24 @@ function preloadBackImages() {
 
 preloadBackImages();
 
-// Immediately shuffle positions to override CSS (before images load)
-// This prevents showing CSS positions while waiting for images
-shuffleImagePositions();
+// Check if loading from URL hash
+const hasUrlState = window.location.hash.length > 1;
+
+// Only shuffle if NOT loading from URL
+if (!hasUrlState) {
+    // Immediately shuffle positions to override CSS (before images load)
+    // This prevents showing CSS positions while waiting for images
+    shuffleImagePositions();
+}
 
 // Wait for first image to load before calculating dimensions and centering
 const firstImage = imageWrappers[0].querySelector('.draggable');
+let isInitialized = false;
 
 function initializeAfterImageLoad() {
+    // Prevent re-initialization
+    if (isInitialized) return;
+    isInitialized = true;
     // Store image dimensions from the first wrapper
     const firstWrapper = imageWrappers[0];
     const rect = firstWrapper.getBoundingClientRect();
@@ -317,19 +332,13 @@ function initializeAfterImageLoad() {
         wrapper.style.transition = 'none';
     });
 
-    // Check if loading from URL hash
-    const hasUrlState = window.location.hash.length > 1;
-
     if (!hasUrlState) {
         // Normal initialization - center and calculate grid
         centerImages();
         recalculateGridOrigin();
-    } else {
-        // Loading from URL - just calculate initial grid
-        recalculateGridOrigin();
     }
 
-    // Load state from URL hash if present
+    // Load state from URL hash if present (this will set positions and calculate grid)
     loadStateFromHash();
 
     // Re-enable transitions after a brief delay
