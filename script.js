@@ -14,6 +14,11 @@ let history = [];
 let historyIndex = -1;
 const MAX_HISTORY = 50;
 
+// Game counters
+let actionPoints = 0;
+let finishedTasks = 0;
+let freeMovesRemaining = 0;
+
 // Grid configuration - spacing based on initial layout
 const GRID_SPACING_X = 250; // Horizontal spacing between image centers
 const GRID_SPACING_Y = 175; // Vertical spacing between image centers
@@ -63,6 +68,18 @@ document.getElementById('copyLinkBtn').addEventListener('click', copyLinkToClipb
 document.getElementById('gridBtn').addEventListener('click', toggleGridOverlay);
 document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
 document.getElementById('hideBtn').addEventListener('click', toggleButtons);
+
+// Bottom dashboard listeners
+document.getElementById('finishTaskBtn').addEventListener('click', () => {
+    finishedTasks++;
+    updateCounters();
+    addToHistory();
+});
+
+function updateCounters() {
+    document.getElementById('actionPointsCounter').textContent = actionPoints;
+    document.getElementById('finishedTasksCounter').textContent = finishedTasks;
+}
 
 function handleBackgroundClick(e) {
     // Check if click is not on an image or button
@@ -206,6 +223,12 @@ function newGame() {
 
     // Clear selections
     selectedImages.clear();
+
+    // Reset counters
+    actionPoints = 0;
+    finishedTasks = 0;
+    freeMovesRemaining = 0;
+    updateCounters();
 
     showToast('Shuffling...');
 
@@ -523,7 +546,10 @@ function captureState() {
         gridOrigin: {
             x: GRID_ORIGIN_X,
             y: GRID_ORIGIN_Y
-        }
+        },
+        actionPoints: actionPoints,
+        finishedTasks: finishedTasks,
+        freeMovesRemaining: freeMovesRemaining
     };
 }
 
@@ -549,6 +575,17 @@ function applyState(state) {
         // Update grid overlay if visible
         updateGridOverlayIfVisible();
     }
+
+    if (state.actionPoints !== undefined) {
+        actionPoints = state.actionPoints;
+    }
+    if (state.finishedTasks !== undefined) {
+        finishedTasks = state.finishedTasks;
+    }
+    if (state.freeMovesRemaining !== undefined) {
+        freeMovesRemaining = state.freeMovesRemaining;
+    }
+    updateCounters();
 }
 
 function addToHistory() {
@@ -579,6 +616,13 @@ function addToHistory() {
 
 function statesAreEqual(state1, state2) {
     if (!state1 || !state2) return false;
+
+    // Check if counters are the same
+    if (state1.actionPoints !== state2.actionPoints ||
+        state1.finishedTasks !== state2.finishedTasks ||
+        state1.freeMovesRemaining !== state2.freeMovesRemaining) {
+        return false;
+    }
 
     // Check if grid origins are the same
     if (state1.gridOrigin.x !== state2.gridOrigin.x ||
@@ -659,6 +703,13 @@ function flipImage(img) {
     const imageName = img.dataset.name;
     const currentSrc = img.src;
 
+    // Increment action points for the flip
+    actionPoints++;
+    updateCounters();
+
+    // Grant a free move for the next drag
+    freeMovesRemaining++;
+
     // Add flip animation
     img.classList.add('flipping');
 
@@ -705,7 +756,9 @@ function startDrag(e, wrapper) {
             return {
                 element: wrapper,
                 dx: wrapperRect.left - activeRect.left,
-                dy: wrapperRect.top - activeRect.top
+                dy: wrapperRect.top - activeRect.top,
+                startLeft: parseFloat(wrapper.style.left) || 0,
+                startTop: parseFloat(wrapper.style.top) || 0
             };
         });
     } else {
@@ -713,6 +766,32 @@ function startDrag(e, wrapper) {
     }
 
     e.preventDefault();
+}
+
+function getSnappedPosition(left, top) {
+    const centerX = left + IMAGE_WIDTH / 2;
+    const centerY = top + IMAGE_HEIGHT / 2;
+    const offsetFromOriginX = centerX - GRID_ORIGIN_X;
+    const offsetFromOriginY = centerY - GRID_ORIGIN_Y;
+    const gridIndexX = Math.round(offsetFromOriginX / GRID_SPACING_X);
+    const gridIndexY = Math.round(offsetFromOriginY / GRID_SPACING_Y);
+    return {
+        gridIndexX,
+        gridIndexY,
+        snappedLeft: (GRID_ORIGIN_X + gridIndexX * GRID_SPACING_X) - IMAGE_WIDTH / 2,
+        snappedTop: (GRID_ORIGIN_Y + gridIndexY * GRID_SPACING_Y) - IMAGE_HEIGHT / 2
+    };
+}
+
+function hasMovedToNewGridNode(element, startLeft, startTop) {
+    const currentLeft = parseFloat(element.style.left) || 0;
+    const currentTop = parseFloat(element.style.top) || 0;
+    
+    const startSnap = getSnappedPosition(startLeft, startTop);
+    const currentSnap = getSnappedPosition(currentLeft, currentTop);
+    
+    return startSnap.gridIndexX !== currentSnap.gridIndexX || 
+           startSnap.gridIndexY !== currentSnap.gridIndexY;
 }
 
 function drag(e) {
@@ -803,13 +882,16 @@ function stopDrag(e) {
     }
 
     if (activeElement && isDragging) {
-        // Remove dragging class
+        // Remove dragging class from all elements immediately
         activeElement.classList.remove('dragging');
         if (relativePositions.length > 0) {
             relativePositions.forEach(rel => {
                 rel.element.classList.remove('dragging');
             });
         }
+
+        // Check if all images are selected
+        const allImagesSelected = relativePositions.length === imageWrappers.length;
 
         // Check if dropped on another wrapper (only for single wrapper drag, not multiple selection)
         if (relativePositions.length === 0) {
@@ -823,12 +905,31 @@ function stopDrag(e) {
                 activeElement.style.zIndex = 1;
                 activeElement = null;
                 relativePositions = [];
+                // Do NOT increment action points for a swap
                 return;
             }
         }
 
-        // Check if all images are selected
-        const allImagesSelected = relativePositions.length === imageWrappers.length;
+        // Check if anything actually moved relative to its snapped starting position
+        let anythingMoved = false;
+        if (relativePositions.length > 0) {
+            anythingMoved = relativePositions.some(rel => {
+                return hasMovedToNewGridNode(rel.element, rel.startLeft, rel.startTop);
+            });
+        } else {
+            anythingMoved = hasMovedToNewGridNode(activeElement, originalDragPosition.left, originalDragPosition.top);
+        }
+
+        // Increment action points for a drag and drop action, but only if NOT moving everything AND something actually moved
+        if (!allImagesSelected && anythingMoved) {
+            if (freeMovesRemaining > 0) {
+                // Consume a free move granted by a flip
+                freeMovesRemaining--;
+            } else {
+                actionPoints++;
+                updateCounters();
+            }
+        }
 
         if (allImagesSelected) {
             // If all images were moved together, don't snap - just recalculate grid origin
