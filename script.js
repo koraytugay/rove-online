@@ -18,6 +18,7 @@ const MAX_HISTORY = 50;
 let actionPoints = 0;
 let totalActionPoints = 0;
 let finishedTasks = 0;
+let freeMovesRemaining = 0;
 
 // Grid configuration - spacing based on initial layout
 const GRID_SPACING_X = 250; // Horizontal spacing between image centers
@@ -73,6 +74,7 @@ document.getElementById('hideBtn').addEventListener('click', toggleButtons);
 document.getElementById('finishTaskBtn').addEventListener('click', () => {
     finishedTasks++;
     actionPoints = 0; // Reset action points for new task
+    freeMovesRemaining = 0; // Clear any unused free moves from previous task
     updateCounters();
     addToHistory();
 });
@@ -215,6 +217,7 @@ function newGame() {
     actionPoints = 0;
     totalActionPoints = 0;
     finishedTasks = 0;
+    freeMovesRemaining = 0;
     updateCounters();
 
     showToast('Shuffling...');
@@ -536,7 +539,8 @@ function captureState() {
         },
         actionPoints: actionPoints,
         totalActionPoints: totalActionPoints,
-        finishedTasks: finishedTasks
+        finishedTasks: finishedTasks,
+        freeMovesRemaining: freeMovesRemaining
     };
 }
 
@@ -579,6 +583,9 @@ function applyState(state) {
     if (state.finishedTasks !== undefined) {
         finishedTasks = state.finishedTasks;
     }
+    if (state.freeMovesRemaining !== undefined) {
+        freeMovesRemaining = state.freeMovesRemaining;
+    }
     updateCounters();
 }
 
@@ -614,7 +621,8 @@ function statesAreEqual(state1, state2) {
     // Check if counters are the same
     if (state1.actionPoints !== state2.actionPoints ||
         state1.totalActionPoints !== state2.totalActionPoints ||
-        state1.finishedTasks !== state2.finishedTasks) {
+        state1.finishedTasks !== state2.finishedTasks ||
+        state1.freeMovesRemaining !== state2.freeMovesRemaining) {
         return false;
     }
 
@@ -696,6 +704,9 @@ function handleImageClick(e, wrapper) {
 function flipImage(img) {
     const imageName = img.dataset.name;
     const currentSrc = img.src;
+
+    // Flipping is free, but it grants a free move for the next drag
+    freeMovesRemaining++;
 
     // Add flip animation
     img.classList.add('flipping');
@@ -909,9 +920,14 @@ function stopDrag(e) {
 
         // Increment action points for a drag and drop action, but only if NOT moving everything AND something actually moved
         if (!allImagesSelected && anythingMoved) {
-            actionPoints++;
-            totalActionPoints++;
-            updateCounters();
+            if (freeMovesRemaining > 0) {
+                // Consume a free move granted by a flip
+                freeMovesRemaining--;
+            } else {
+                actionPoints++;
+                totalActionPoints++;
+                updateCounters();
+            }
         }
 
         if (allImagesSelected) {
