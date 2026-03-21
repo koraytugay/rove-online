@@ -117,34 +117,34 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 30px;
+    gap: 35px;
     z-index: 2000;
     backdrop-filter: blur(8px);
     background: rgba(40, 35, 30, 0.85);
-    padding: 12px 30px;
+    padding: 12px 25px;
     border-radius: 12px;
     border: 2px solid rgba(210, 105, 60, 0.6);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(255, 140, 60, 0.1);
     color: #f4e4d4;
     transition: opacity 0.3s ease;
+    white-space: nowrap;
 }
 
 .bottom-dashboard .counter-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
     font-size: 16px;
     font-family: 'Courier New', Courier, monospace;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
+    white-space: nowrap;
 }
 
 .bottom-dashboard .counter-item span:last-child {
     color: #FFD700; /* Gold for numbers */
     font-size: 20px;
-    min-width: 30px;
-    text-align: right;
 }
 
 .bottom-dashboard button {

@@ -16,8 +16,8 @@ const MAX_HISTORY = 50;
 
 // Game counters
 let actionPoints = 0;
+let totalActionPoints = 0;
 let finishedTasks = 0;
-let freeMovesRemaining = 0;
 
 // Grid configuration - spacing based on initial layout
 const GRID_SPACING_X = 250; // Horizontal spacing between image centers
@@ -72,12 +72,14 @@ document.getElementById('hideBtn').addEventListener('click', toggleButtons);
 // Bottom dashboard listeners
 document.getElementById('finishTaskBtn').addEventListener('click', () => {
     finishedTasks++;
+    actionPoints = 0; // Reset action points for new task
     updateCounters();
     addToHistory();
 });
 
 function updateCounters() {
     document.getElementById('actionPointsCounter').textContent = actionPoints;
+    document.getElementById('totalActionPointsCounter').textContent = totalActionPoints;
     document.getElementById('finishedTasksCounter').textContent = finishedTasks;
 }
 
@@ -123,22 +125,7 @@ function handleKeyPress(e) {
 }
 
 function saveState() {
-    savedState = {
-        images: Array.from(imageWrappers).map(wrapper => {
-            const img = wrapper.querySelector('.draggable');
-            return {
-                id: wrapper.id,
-                left: wrapper.style.left,
-                top: wrapper.style.top,
-                src: img.src
-            };
-        }),
-        gridOrigin: {
-            x: GRID_ORIGIN_X,
-            y: GRID_ORIGIN_Y
-        }
-    };
-
+    savedState = captureState();
     showToast('State Saved');
 }
 
@@ -226,8 +213,8 @@ function newGame() {
 
     // Reset counters
     actionPoints = 0;
+    totalActionPoints = 0;
     finishedTasks = 0;
-    freeMovesRemaining = 0;
     updateCounters();
 
     showToast('Shuffling...');
@@ -548,8 +535,8 @@ function captureState() {
             y: GRID_ORIGIN_Y
         },
         actionPoints: actionPoints,
-        finishedTasks: finishedTasks,
-        freeMovesRemaining: freeMovesRemaining
+        totalActionPoints: totalActionPoints,
+        finishedTasks: finishedTasks
     };
 }
 
@@ -562,8 +549,15 @@ function applyState(state) {
             wrapper.style.left = imgState.left;
             wrapper.style.top = imgState.top;
             const img = wrapper.querySelector('.draggable');
-            if (img) {
-                img.src = imgState.src;
+            if (img && img.src !== imgState.src) {
+                // If the image source is changing, play the flip animation
+                img.classList.add('flipping');
+                setTimeout(() => {
+                    img.src = imgState.src;
+                }, 300);
+                setTimeout(() => {
+                    img.classList.remove('flipping');
+                }, 600);
             }
         }
     });
@@ -579,11 +573,11 @@ function applyState(state) {
     if (state.actionPoints !== undefined) {
         actionPoints = state.actionPoints;
     }
+    if (state.totalActionPoints !== undefined) {
+        totalActionPoints = state.totalActionPoints;
+    }
     if (state.finishedTasks !== undefined) {
         finishedTasks = state.finishedTasks;
-    }
-    if (state.freeMovesRemaining !== undefined) {
-        freeMovesRemaining = state.freeMovesRemaining;
     }
     updateCounters();
 }
@@ -619,8 +613,8 @@ function statesAreEqual(state1, state2) {
 
     // Check if counters are the same
     if (state1.actionPoints !== state2.actionPoints ||
-        state1.finishedTasks !== state2.finishedTasks ||
-        state1.freeMovesRemaining !== state2.freeMovesRemaining) {
+        state1.totalActionPoints !== state2.totalActionPoints ||
+        state1.finishedTasks !== state2.finishedTasks) {
         return false;
     }
 
@@ -702,13 +696,6 @@ function handleImageClick(e, wrapper) {
 function flipImage(img) {
     const imageName = img.dataset.name;
     const currentSrc = img.src;
-
-    // Increment action points for the flip
-    actionPoints++;
-    updateCounters();
-
-    // Grant a free move for the next drag
-    freeMovesRemaining++;
 
     // Add flip animation
     img.classList.add('flipping');
@@ -922,13 +909,9 @@ function stopDrag(e) {
 
         // Increment action points for a drag and drop action, but only if NOT moving everything AND something actually moved
         if (!allImagesSelected && anythingMoved) {
-            if (freeMovesRemaining > 0) {
-                // Consume a free move granted by a flip
-                freeMovesRemaining--;
-            } else {
-                actionPoints++;
-                updateCounters();
-            }
+            actionPoints++;
+            totalActionPoints++;
+            updateCounters();
         }
 
         if (allImagesSelected) {
