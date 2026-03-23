@@ -896,14 +896,22 @@ function stopDrag(e) {
             const dropTarget = getImageUnderMouse(e.clientX, e.clientY, activeElement);
             if (dropTarget && dropTarget !== activeElement) {
                 swapImagePositions(activeElement, dropTarget);
-                // Add to history after swap
-                addToHistory();
                 // Update grid overlay if visible
                 updateGridOverlayIfVisible();
                 activeElement.style.zIndex = 1;
                 activeElement = null;
                 relativePositions = [];
-                // Do NOT increment action points for a swap
+                
+                // Increment action points for a swap
+                if (freeMovesRemaining > 0) {
+                    freeMovesRemaining--;
+                } else {
+                    actionPoints++;
+                    totalActionPoints++;
+                }
+                updateCounters();
+                // Add to history after swap and action points increment
+                addToHistory();
                 return;
             }
         }
