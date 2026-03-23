@@ -19,6 +19,7 @@ let actionPoints = 0;
 let totalActionPoints = 0;
 let finishedTasks = 0;
 let freeMovesRemaining = 0;
+let isSelectingModule = false;
 
 // Grid configuration - spacing based on initial layout
 const GRID_SPACING_X = 250; // Horizontal spacing between image centers
@@ -86,6 +87,19 @@ function updateCounters() {
 }
 
 function handleBackgroundClick(e) {
+    if (isSelectingModule) {
+        const isImage = e.target.classList.contains('draggable');
+        const isButton = e.target.tagName === 'BUTTON' || e.target.closest('.button-container') || e.target.closest('.flip-btn');
+        
+        if (!isImage && !isButton) {
+            isSelectingModule = false;
+            document.querySelectorAll('.draggable').forEach(d => d.classList.remove('module-highlight'));
+            const toast = document.getElementById('toast');
+            if (toast) toast.classList.remove('show');
+            return;
+        }
+    }
+
     // Check if click is not on an image or button
     const isImage = e.target.classList.contains('draggable');
     const isButton = e.target.tagName === 'BUTTON' || e.target.closest('.button-container') || e.target.closest('.flip-btn');
@@ -502,11 +516,18 @@ function toggleButtons() {
 
 // Toast notification
 let toastTimeout = null;
-function showToast(message) {
+function showToast(message, isTop = false) {
     const toast = document.getElementById('toast');
     if (!toast) return;
 
     toast.textContent = message;
+    
+    if (isTop) {
+        toast.classList.add('top');
+    } else {
+        toast.classList.remove('top');
+    }
+    
     toast.classList.add('show');
 
     // Clear existing timeout
@@ -691,6 +712,28 @@ function handleImageClick(e, wrapper) {
         e.stopPropagation();
         const img = wrapper.querySelector('.draggable');
 
+        if (isSelectingModule) {
+            // Gripper selection mode
+            if (img.id === 'img3') return; // Cannot select Gripper itself
+
+            // If choosing Sensor (img6), it still increments action points.
+            // Since flipping Gripper (img3) just incremented freeMovesRemaining,
+            // we need to decrement it if Sensor is chosen.
+            if (img.id === 'img6') {
+                if (freeMovesRemaining > 0) {
+                    freeMovesRemaining--;
+                }
+            }
+            // For any other module, no change in behavior (keep the free move from Gripper)
+
+            // Cleanup selection mode
+            isSelectingModule = false;
+            document.querySelectorAll('.draggable').forEach(d => d.classList.remove('module-highlight'));
+            const toast = document.getElementById('toast');
+            if (toast) toast.classList.remove('show');
+            return;
+        }
+
         if (selectedImages.has(wrapper)) {
             selectedImages.delete(wrapper);
             img.classList.remove('selected');
@@ -708,6 +751,17 @@ function flipImage(img) {
     // Flipping is free, but it grants a free move for the next drag
     if (img.id !== 'img6') {
         freeMovesRemaining++;
+    }
+
+    // Exception: Gripper (img3)
+    if (img.id === 'img3') {
+        isSelectingModule = true;
+        showToast('Pick which module you activate', true);
+        document.querySelectorAll('.draggable').forEach(d => {
+            if (d.id !== 'img3') {
+                d.classList.add('module-highlight');
+            }
+        });
     }
 
     // Add flip animation
@@ -731,6 +785,7 @@ function flipImage(img) {
 }
 
 function startDrag(e, wrapper) {
+    if (isSelectingModule) return;
     activeElement = wrapper;
     activeElement.style.zIndex = 1000;
     activeElement.classList.add('dragging');
