@@ -706,7 +706,9 @@ function flipImage(img) {
     const currentSrc = img.src;
 
     // Flipping is free, but it grants a free move for the next drag
-    freeMovesRemaining++;
+    if (img.id !== 'img6') {
+        freeMovesRemaining++;
+    }
 
     // Add flip animation
     img.classList.add('flipping');
